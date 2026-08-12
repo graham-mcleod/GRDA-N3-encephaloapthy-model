@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# NEURON/NMODL platform-specific build products
+/arm64/
+/x86_64/
+/mod/arm64/
+/mod/x86_64/
+nrnmech.dll
+*.o
+*.obj
+*.so
+*.dylib
+
+# Raw/generated simulation output
+/lfp*.txt
+/vcort*.txt
+/raster*.txt
+/run*.log
+/output/
+/tmp/
+
+# Generated plots in the repository root. Curated figures belong in docs/figures/.
+/*.png

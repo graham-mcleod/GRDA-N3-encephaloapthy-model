@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run bazh_net.py (single state, short)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/bazh_net.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": false
+    }
+  ]
+}
