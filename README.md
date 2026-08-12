@@ -5,7 +5,7 @@ This repository extends [Fink et al.'s NEURON port](https://pubmed.ncbi.nlm.nih.
 No sepsis-specific biology or new oscillators have been added. The parameters are not derived from real patient data nor any validated
 model of sepsis-associated encephalopathy.
 
-- [State atlas (states 5--45)](docs/figures/SAE_state_atlas_states_5_to_45_seed1.pdf)
+- [State atlas (states 5-45)](docs/figures/SAE_state_atlas_states_5_to_45_seed1.pdf)
 - [State definitions and hypotheses](SAE_STATE_MATRIX.md)
 - Results: [all states](docs/figures/state_atlas_metrics_seed1.csv) and [repeated runs](docs/figures/lead_replication_metrics_seeds1_to_3.csv)
 - [Fink et al.'s original README](README_FINK_ET_AL.md)
