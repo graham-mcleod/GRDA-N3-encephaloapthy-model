@@ -78,7 +78,7 @@ analyzed over 10--119 seconds. See `analyze_lfp_states.py` for details.
 
 ![Wake and N3 LFP, autocorrelation, and power-spectrum comparison](docs/figures/wake_vs_n3_analysis_proof_of_concept.png)
 
-Figure 1. Proof of concept for LFP outputs autocorrelation and power spectral analysis.
+Figure 1. Proof of concept for LFP output analysis: autocorrelation and power spectrum
 
 The atlas contains one page for each state 5--45, labeled `state_n`, showing the full 120-second trace and final 30 seconds. Traces are filtered to 0.5--30 Hz and scaled separately for readability; amplitude and spectral measures appear on each page. The first 10 seconds are initialization.
 
