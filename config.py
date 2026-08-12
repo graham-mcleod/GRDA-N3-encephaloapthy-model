@@ -464,10 +464,9 @@ sae_bg_bal44_gkl_inh = gkl_inh_awake + 0.4375 * (gkl_inh_s2 - gkl_inh_awake)
 # States 34--40: N3-centered subtraction and decoupling screen.  These are
 # not points on a presumed N3-to-wake trajectory.  Each state starts from the
 # complete calibrated N3 parameter vector and selectively weakens one
-# candidate organizer of normal N3 activity.  State 40 is the sole planned
-# interaction, testing whether modest leak relief prevents suppression when
-# recurrent excitation is reduced.  Slow RE->TC GABA-B remains at N3 in all
-# seven states.
+# candidate organizer of normal N3 activity. State 40 tests two changes
+# together: reduced recurrent PYR->PYR AMPA and reduced cortical K leak.
+# Slow RE->TC GABA-B remains at N3 in all seven states.
 n3_sub_recur_mild = 2.35
 n3_sub_recur_moderate = 2.00
 n3_sub_recur_strong = 1.60
