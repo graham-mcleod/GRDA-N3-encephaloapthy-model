@@ -1,13 +1,9 @@
 # Exploratory thalamocortical modeling of encephalopathic slowing and RDA
 
-This repository extends [Fink et al.'s NEURON port](https://pubmed.ncbi.nlm.nih.gov/39345726/)
-of the [Krishnan et al. thalamocortical sleep model](https://doi.org/10.7554/eLife.18607).
-It tests parameter combinations that may produce diffuse background slowing
-or brief 0.5--4 Hz RDA-like trains.
+This repository extends [Fink et al.'s NEURON port](https://pubmed.ncbi.nlm.nih.gov/39345726/) of the [Krishnan et al. thalamocortical sleep model](https://doi.org/10.7554/eLife.18607). It tests parameter combinations that may produce diffuse background slowing and/or brief 0.5--4 Hz GRDA-like trains.
 
-No sepsis-specific biology or external oscillator has been added. These are
-mechanistic sensitivity tests, not patient-derived parameters or validated
-models of sepsis-associated encephalopathy.
+No sepsis-specific biology or new oscillators have been added. The parameters are not derived from real patient data nor any validated
+model of sepsis-associated encephalopathy.
 
 - [State atlas (states 5--45)](docs/figures/SAE_state_atlas_states_5_to_45_seed1.pdf)
 - [State definitions and hypotheses](SAE_STATE_MATRIX.md)
@@ -16,9 +12,7 @@ models of sepsis-associated encephalopathy.
 
 ## What changed from Fink et al.
 
-The underlying receptor and channel mechanisms are unchanged. GABA-A and
-GABA-B already existed. This extension exposes selected synaptic, intrinsic,
-and GABA-A timing parameters while preserving the original defaults.
+The underlying receptor and channel mechanisms are unchanged. Synaptic, intrinsic, and GABA-A timing parameters were modified (preserving original defaults). GABA-A and GABA-B receptor mechanisms existed but scaled multiple pathway strengths shared a single multiplier; these were separated.
 
 | File | Change |
 |---|---|
@@ -31,9 +25,10 @@ Fink et al.'s README is preserved unchanged.
 
 ## Experimental path
 
-Wake (state 0), N3 (state 2), and states 5--48 were each run for 120 simulated
-seconds. N3 and states 35, 38, 39, and 40 were tested across three random
-seeds.
+Wake (state 0) N3 (state 2) were each run for 120 simulated seconds
+To test different parameter combos, novel states 5--48 were each run for 120 simulated seconds. 
+This was done iteratively a few states at a time, building on knowledge from all prior runs. 
+Due to promising initial results, states 35, 38, 39, and 40 were tested across three random seeds, as was N3 for comparison. 
 
 **Recurrent cortical drive** refers to the PYR->PYR AMPA-D2 gain, which
 controls pyramidal-cell self-excitation but may also affect miniature events.
@@ -43,8 +38,8 @@ TC and RE are thalamocortical relay and reticular neurons.
 
 | States | Hypothesis family | Result |
 |---:|---|---|
-| 5--6 | Combined reduced cortical excitation, stronger inhibition, and altered K leak to test a low-excitability SAE hypothesis. | Both vectors oversuppressed the network. |
-| 7--8 | Restored only recurrent cortical drive on the state-5/6 backgrounds to test whether inadequate self-excitation caused suppression. | Activity returned as sharp packets rather than a continuous slow background. |
+| 5--6 | Combined reduced cortical excitation, stronger inhibition, and altered K leak to test a low-excitability SAE hypothesis. | Both states suppressed network activity too strongly (~flat output). |
+| 7--8 | Restored only recurrent cortical drive on the state-5/6 backgrounds, to test whether inadequate self-excitation caused suppression. | Activity returned as sharp packets rather than a continuous slow background. |
 | 9--12 | Built a milder N1-like wake-to-N2 bridge and separated cortical recurrence, cortical E/I, and thalamic recruitment tests. | Stable active backgrounds with only modest slowing; state 11 became the background anchor. |
 | 13--15 | Prolonged cortical, thalamic, or both GABA-A decay constants by 1.5x. | Propofol-inspired kinetic sensitivity tests, not SAE calibration; no compelling target phenotype. |
 | 16--18 | Increased recurrent drive and cortical K leak together along the wake-to-N2 axis. | State 17 produced repeated theta packets. State 18 entered a low-output, fast-dominated regime (about 24% delta; centroid 11.2 Hz), not the target. |
@@ -52,9 +47,10 @@ TC and RE are thalamocortical relay and reticular neurons.
 | 25--29 | Tested TC Ih/K-leak timing and PYR dendritic NaP/Km/KCa modules. | Changed packet recruitment without reaching the target phenotype. |
 | 30--33 | Fine-bracketed recurrence alone versus recurrence with matched cortical K leak. | Located a transition into theta packets; packet-free states showed only modest slowing. |
 
-These wake-based tests produced suppression, modest slowing, or theta packets
-rather than the target. We therefore reversed direction: starting from N3, we
-selectively weakened sleep organization while retaining slow activity.
+These wake-based tests produced suppression, modest slowing, or theta packets rather than the target. 
+This approach did exhaustively sweep through all parameters. 
+Additional avenues to explore could be: 
+Nonetheless, a pivot was made: start from N3 and weaken sleep organization while retaining slow activity.
 
 ### Approach 2: start from N3 and remove sleep organization (states 34--48)
 
@@ -64,7 +60,7 @@ selectively weakened sleep organization while retaining slow activity.
 | 41--44 | Fine-tuned recurrent drive, with or without matched cortical K leak. | State 42 was the best initial irregular-slow candidate; state 44 was slowest (~93% delta) but looked more like organized N3. Both need replication. |
 | 45--48 | Transferred the state-39 thalamic module or state-38 fast RE->TC GABA-A change onto states 35/40. | State 45 developed intermittent ~6.5-Hz theta packets; state 46 had smaller fast bouts. States 47/48 gave little morphological improvement. |
 
-## Current result
+## Current results
 
 Values below are mean +/- SD across three runs with different random seeds,
 analyzed over 10--119 seconds. See `analyze_lfp_states.py` for details.
@@ -86,10 +82,7 @@ slowing (state 38, and state 44 in its first run).
 
 ![Wake and N3 LFP, autocorrelation, and power-spectrum comparison](docs/figures/wake_vs_n3_analysis_proof_of_concept.png)
 
-The atlas contains one page for each state 5--45, labeled `state_n`, showing
-the full 120-second trace and final 30 seconds. Traces are filtered to
-0.5--30 Hz and scaled separately for readability; amplitude and spectral
-measures appear on each page. The first 10 seconds are initialization.
+The atlas contains one page for each state 5--45, labeled `state_n`, showing the full 120-second trace and final 30 seconds. Traces are filtered to 0.5--30 Hz and scaled separately for readability; amplitude and spectral measures appear on each page. The first 10 seconds are initialization.
 
 Rebuild the atlas and metrics with:
 
@@ -99,9 +92,7 @@ python build_state_atlas.py
 
 ## Running a static state
 
-Compile the mechanisms as described in `README_FINK_ET_AL.md`, activate the
-Python environment, and run a state explicitly. On the tested Apple Silicon
-setup with Open MPI:
+Compile the mechanisms as described in `README_FINK_ET_AL.md`, activate the Python environment, and run a state explicitly. On the tested Apple Silicon setup with Open MPI:
 
 ```bash
 export MPI_LIB_NRN_PATH=$(brew --prefix open-mpi)/lib/libmpi.dylib
@@ -109,12 +100,10 @@ FINK_STATE=35 FINK_SEED=1 FINK_DURATION_MS=120000 \
   mpiexec -n 8 nrniv -mpi -python bazh_net.py 2>&1 | tee run_state35_seed1.log
 ```
 
-Outputs are named by state, seed, and MPI rank count. A 120-second run took
-approximately 11--12 minutes under otherwise light load. See
+Outputs are named by state, seed, and MPI rank count. A 120-second run took approximately 11--12 minutes under otherwise light load. See
 `requirements.txt` for tested Python packages; MPI is a system dependency.
 
 ## Limitations
-
 - Most states have one run; N3 and states 35/38/39/40 have three.
 - One local cortical LFP cannot establish the bilaterally synchronous,
   symmetric distribution required for clinical **generalized** RDA, nor can
