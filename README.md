@@ -98,8 +98,7 @@ FINK_STATE=35 FINK_SEED=1 FINK_DURATION_MS=120000 \
   mpiexec -n 8 nrniv -mpi -python bazh_net.py 2>&1 | tee run_state35_seed1.log
 ```
 
-Outputs are named by state, seed, and MPI rank count. A 120-second run took approximately 11--12 minutes under otherwise light load. See
-`requirements.txt` for tested Python packages; MPI is a system dependency.
+Outputs are named by state, seed, and MPI rank count. A 120-second run takes approximately 11--12 minutes under an otherwise light load. See `requirements.txt` for tested Python packages; MPI is a system dependency.
 
 ## Limitations
 - Most states have one run. N3 and states 35, 38, 39, 40, 42, and 44 have three runs with different random seeds.
