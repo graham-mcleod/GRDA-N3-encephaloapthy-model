@@ -35,14 +35,14 @@ States 35, 38, 39, 40, 42, and 44 were each repeated with three random seeds; N3
 
 | States | Hypothesis family | Result |
 |---:|---|---|
-| 5--6 | Combined reduced cortical excitation, stronger inhibition, and altered K leak to test a low-excitability SAE hypothesis. | Both states suppressed network activity too strongly (~flat output). |
-| 7--8 | Restored only recurrent cortical drive on the state-5/6 backgrounds, to test whether inadequate self-excitation caused suppression. | Activity returned as sharp packets rather than a continuous slow background. |
-| 9--12 | Built a milder N1-like wake-to-N2 bridge and separated cortical recurrence, cortical E/I, and thalamic recruitment tests. | Stable active backgrounds with only modest slowing; state 11 became the background anchor. |
-| 13--15 | Prolonged cortical, thalamic, or both GABA-A decay constants by 1.5x. | Propofol-inspired kinetic sensitivity tests, not SAE calibration; no compelling target phenotype. |
-| 16--18 | Increased recurrent drive and cortical K leak together along the wake-to-N2 axis. | State 17 produced repeated theta packets. State 18 entered a low-output, fast-dominated regime (about 24% delta; centroid 11.2 Hz), not the target. |
-| 19--24 | Perturbed separated thalamic pathways. | Packet incidence/duration changed, but frequency remained approximately 6.4--6.9 Hz: theta, not delta. |
-| 25--29 | Tested TC Ih/K-leak timing and PYR dendritic NaP/Km/KCa modules. | Changed packet recruitment without reaching the target phenotype. |
-| 30--33 | Fine-bracketed recurrence alone versus recurrence with matched cortical K leak. | Located a transition into theta packets; packet-free states showed only modest slowing. |
+| 5-6 | Combined reduced cortical excitation, stronger inhibition, and altered K leak to test a low-excitability SAE hypothesis. | Both states suppressed network activity too strongly (~flat output). |
+| 7-8 | Restored only recurrent cortical drive on the state-5/6 backgrounds, to test whether inadequate self-excitation caused suppression. | Activity returned as sharp packets rather than a continuous slow background. |
+| 9-12 | Built a milder N1-like wake-to-N2 bridge and separated cortical recurrence, cortical E/I, and thalamic recruitment tests. | Stable active backgrounds with only modest slowing; state 11 became the background anchor. |
+| 13-15 | Prolonged cortical, thalamic, or both GABA-A decay constants by 1.5x. | Propofol-inspired kinetic sensitivity tests, not SAE calibration; no compelling target phenotype. |
+| 16-18 | Increased recurrent drive and cortical K leak together along the wake-to-N2 axis. | State 17 produced repeated theta packets. State 18 entered a low-output, fast-dominated regime (about 24% delta; centroid 11.2 Hz), not the target. |
+| 19-24 | Perturbed separated thalamic pathways. | Packet incidence/duration changed, but frequency remained approximately 6.4--6.9 Hz: theta, not delta. |
+| 25-29 | Tested TC Ih/K-leak timing and PYR dendritic NaP/Km/KCa modules. | Changed packet recruitment without reaching the target phenotype. |
+| 30-33 | Fine-bracketed recurrence alone versus recurrence with matched cortical K leak. | Located a transition into theta packets; packet-free states showed only modest slowing. |
 
 These wake-based tests produced suppression, modest slowing, or theta packets rather than the target. 
 This was not an exhaustive search, and other combinations of synaptic strengths, membrane properties, receptor kinetics, and pathway interactions remain unexplored. 
@@ -53,9 +53,9 @@ Nevertheless, a pivot was made: start from N3 and weaken sleep organization whil
 
 | States | Hypothesis family | Result |
 |---:|---|---|
-| 34--40 | Reduced cortical recurrence/leak or altered thalamic inhibition and membrane properties. | States 35 and 40 produced consistent irregular slowing. State 38 remained N3-like; state 39 varied across runs. |
-| 41--44 | Fine-tuned recurrent drive, with or without matched cortical K leak. | States 42 and 44 reproduced consistently across three random seeds. State 42 produced irregular slowing; state 44 was slower but more organized and N3-like. ||
-| 45--48 | Transferred the state-39 thalamic module or state-38 fast RE->TC GABA-A change onto states 35/40. | State 45 developed intermittent ~6.5-Hz theta packets; state 46 had smaller fast bouts. States 47/48 gave little morphological improvement. |
+| 34-40 | Reduced cortical recurrence/leak or altered thalamic inhibition and membrane properties. | States 35 and 40 produced consistent irregular slowing. State 38 remained N3-like; state 39 varied across runs. |
+| 41-44 | Fine-tuned recurrent drive, with or without matched cortical K leak. | States 42 and 44 reproduced consistently across three random seeds. State 42 produced irregular slowing; state 44 was slower but more organized and N3-like. ||
+| 45-48 | Transferred the state-39 thalamic module or state-38 fast RE->TC GABA-A change onto states 35/40. | State 45 developed intermittent ~6.5-Hz theta packets; state 46 had smaller fast bouts. States 47/48 gave little morphological improvement. |
 
 ## Current results
 
