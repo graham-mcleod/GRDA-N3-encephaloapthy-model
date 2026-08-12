@@ -57,10 +57,8 @@ filename inside each to match your output).
 Fink et al.'s original default ran the full wake->N2->N3->REM sequence for 360
 seconds. The exploratory configuration uses a 120-second static-state run;
 set `FINK_STATE`, `FINK_SEED`, and `FINK_DURATION_MS` explicitly.
-For exploration, run ONE state for a short time (see `docs/GRDA_N3_tuning.md`):
-in this environment, 1.5 s of the single-state S3 network took ~59 s serial with
-`doextra=False`. Discard roughly the first 10 s of any full run (the network
-starts in a synchronous transient).
+For exploration, run one state at a time. Discard roughly the first 10 s of
+any full run because the network starts with a synchronous transient.
 
 ## What changed after this setup check
 
