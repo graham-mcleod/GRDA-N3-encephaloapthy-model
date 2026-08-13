@@ -102,16 +102,6 @@ Outputs are named by state, seed, and MPI rank count. A 120-second run takes app
 
 ## Limitations
 - Most states have one run. N3 and states 35, 38, 39, 40, 42, and 44 have three runs with different random seeds.
-- One local cortical LFP cannot establish the bilaterally synchronous,
-  symmetric distribution required for clinical **generalized** RDA, nor can
-  this model establish awareness or stimulus reactivity. The honest current
-  label is RDA-like.
-- Slow power alone cannot distinguish encephalopathy from N3. Morphology,
-  stationarity, population participation, state responsiveness, and spatial
-  organization require separate validation.
-- Parameter changes are mechanistic probes, not measurements from septic
-  human or animal brains.
+- One local cortical LFP cannot establish the bilaterally synchronous, symmetric distribution required for clinical generalized RDA.
+- Parameter changes are mechanistic probes, not measurements from septic human or animal brains.
 - Raw outputs are excluded from GitHub because they total several gigabytes.
-
-Exploratory modifications by Graham McLeod with computational assistance from
-OpenAI Codex. Original authorship and GPL-2 licensing are preserved.
