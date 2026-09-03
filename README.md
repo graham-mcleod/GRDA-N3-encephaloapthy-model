@@ -52,7 +52,7 @@ Nevertheless, a pivot was made: start from N3 and weaken sleep organization whil
 | States | Hypothesis family | Result |
 |---:|---|---|
 | 34-40 | Reduced cortical recurrence/leak or altered thalamic inhibition and membrane properties. | States 35 and 40 produced consistent irregular slowing. State 38 remained N3-like; state 39 varied across runs. |
-| 41-44 | Fine-tuned recurrent drive, with or without matched cortical K leak. | States 42 and 44 reproduced consistently across three random seeds. State 42 produced irregular slowing; state 44 was slower but more organized and N3-like. ||
+| 41-44 | Fine-tuned recurrent drive, with or without matched cortical K leak. | States 42 and 44 reproduced consistently across three random seeds. State 42 produced irregular slowing; state 44 was slower but more organized and N3-like. |
 | 45-48 | Transferred the state-39 thalamic module or state-38 fast RE->TC GABA-A change onto states 35/40. | State 45 developed intermittent ~6.5-Hz theta packets; state 46 had smaller fast bouts. States 47/48 gave little morphological improvement. |
 
 ### Later tests (states 49--106)
@@ -80,6 +80,11 @@ analyzed over 10--119 seconds. See `analyze_lfp_states.py` for details.
 | 40 | 84.9 +/- 1.3% | 2.57 +/- 0.16 Hz | Consistent slowing, less organized than N3. |
 | 42 | 90.1 +/- 1.2% | 2.11 +/- 0.16 Hz | Consistent irregular slowing; strongest current diffuse-slowing candidate. |
 | 44 | 91.9 +/- 0.6% | 1.86 +/- 0.07 Hz | Consistent stronger slowing, but more organized and N3-like. |
+| 49 | 91.1 +/- 0.6% | 1.98 +/- 0.06 Hz | Consistent midpoint between states 42 and 44. |
+| 50 | 90.5 +/- 1.6% | 2.02 +/- 0.18 Hz | Moderate slowing, but the waveform varied across runs. |
+| 57 | 72.7 +/- 1.4% | 3.71 +/- 0.12 Hz | Shifted away from delta toward mixed delta-theta activity. |
+| 74 | 95.8 +/- 0.4% | 1.40 +/- 0.04 Hz | Spectrally N3-like, but least N3-like among the four candidates in the bout-shape comparison. |
+| 99 | 96.3 +/- 0.5% | 1.54 +/- 0.10 Hz | Shorter bouts, but irregular and highly N3-like in shape. |
 
 **No state yet provides a robust, validated GRDA phenotype.** The clearest result is a reproducible continuum from irregular slowing toward increasingly organized, N3-like slow activity.
 
@@ -88,6 +93,16 @@ analyzed over 10--119 seconds. See `analyze_lfp_states.py` for details.
 A **state** is one fixed set of model parameters. State 2 is the original N3 state. Experimental state numbers are labels; they do not indicate disease severity or sleep depth.
 
 The screen detects 0.5--4 Hz bouts with repeated timing and shape. A 30-second N3 period from the continuous wake-to-N2-to-N3-to-REM simulation is used as the reference.
+
+![RDA-bout screen across completed simulations](docs/figures/rda_bout_screen_all_completed.png)
+
+*Completed conditions with at least one detected compatible bout. States without such a bout are not plotted.*
+
+![Candidate trade-off between repeated shape and N3 resemblance](docs/figures/rda_candidate_n3_tradeoff.png)
+
+*Focused comparison of the N3 references and states 39, 44, 74, and 99. Labels give median bout length.*
+
+These plots are descriptive, not a GRDA-versus-N3 classifier. They use model N3 as the reference because empirical GRDA waveforms have not yet been included; N3 itself can therefore score strongly. The signal is a model LFP, not scalp EEG: it does not include the broad spatial averaging, volume conduction, skull/scalp filtering, or montage effects of clinical EEG. Waveform shape should not be compared one-for-one with EEG.
 
 ### Candidate trade-off: repeated shape versus N3 resemblance
 
