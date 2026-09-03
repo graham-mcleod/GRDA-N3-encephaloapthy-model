@@ -86,34 +86,7 @@ analyzed over 10--119 seconds. See `analyze_lfp_states.py` for details.
 | 74 | 95.8 +/- 0.4% | 1.40 +/- 0.04 Hz | Spectrally N3-like, but least N3-like among the four candidates in the bout-shape comparison. |
 | 99 | 96.3 +/- 0.5% | 1.54 +/- 0.10 Hz | Shorter bouts, but irregular and highly N3-like in shape. |
 
-**No state yet provides a robust, validated GRDA phenotype.** The clearest result is a reproducible continuum from irregular slowing toward increasingly organized, N3-like slow activity.
-
-## RDA-bout screen
-
-A **state** is one fixed set of model parameters. State 2 is the original N3 state. Experimental state numbers are labels; they do not indicate disease severity or sleep depth.
-
-The screen detects 0.5--4 Hz bouts with repeated timing and shape. A 30-second N3 period from the continuous wake-to-N2-to-N3-to-REM simulation is used as the reference.
-
-![RDA-bout screen across completed simulations](docs/figures/rda_bout_screen_all_completed.png)
-
-*Completed conditions with at least one detected compatible bout. States without such a bout are not plotted.*
-
-![Candidate trade-off between repeated shape and N3 resemblance](docs/figures/rda_candidate_n3_tradeoff.png)
-
-*Focused comparison of the N3 references and states 39, 44, 74, and 99. Labels give median bout length.*
-
-These plots are descriptive, not a GRDA-versus-N3 classifier. They use model N3 as the reference because empirical GRDA waveforms have not yet been included; N3 itself can therefore score strongly. The signal is a model LFP, not scalp EEG: it does not include the broad spatial averaging, volume conduction, skull/scalp filtering, or montage effects of clinical EEG. Waveform shape should not be compared one-for-one with EEG.
-
-### Candidate trade-off: repeated shape versus N3 resemblance
-
-Upper-left = more repetitive within a bout and less like the continuous-N3 template. Labels give median bout length.
-
-| State | Change from N3 | Outcome |
-|---:|---|---|
-| 39 | Changed TC and RE membrane settings from N3 to N2 values. | Most repetitive cycles, but highly N3-like and usually nearly continuous. |
-| 44 | Reduced PYR-to-PYR excitation and reduced cortical K leak by 5%. | Shorter bouts, but less repetitive and still N3-like. |
-| 74 | Increased pyramidal-cell K leak by 5%. | Less N3-like than the other candidates, with approximately 29-second bouts and no sharp/fast warning. |
-| 99 | Reduced PYR-to-PYR excitation, halved PYR-to-TC excitation, and applied a -0.30 uA/cm2 TC current. | Shortest bouts, approximately 13 seconds, but least regular and very N3-like in shape. |
+**No state yet provides a robust, validated RDA phenotype.** The clearest result is a reproducible continuum from irregular slowing toward increasingly organized, N3-like slow activity.
 
 State 39 is the most repetitive candidate. State 74 currently provides the clearest separation from N3. Neither has yet been validated against real GRDA EEG.
 
