@@ -55,6 +55,17 @@ Nevertheless, a pivot was made: start from N3 and weaken sleep organization whil
 | 41-44 | Fine-tuned recurrent drive, with or without matched cortical K leak. | States 42 and 44 reproduced consistently across three random seeds. State 42 produced irregular slowing; state 44 was slower but more organized and N3-like. ||
 | 45-48 | Transferred the state-39 thalamic module or state-38 fast RE->TC GABA-A change onto states 35/40. | State 45 developed intermittent ~6.5-Hz theta packets; state 46 had smaller fast bouts. States 47/48 gave little morphological improvement. |
 
+### Later tests (states 49--106)
+
+| States | What was tested | Main result |
+|---:|---|---|
+| 49-59 | Further separated cortical recurrence, PYR/INH K leak, and TC/RE membrane settings. | State 49 was a stable midpoint. State 57 shifted toward mixed delta-theta activity. State 59 became the starting point for later tests, but retained broad N3-like plateaus. |
+| 60-89 | Tested individual cortical, thalamocortical, GABA-A/GABA-B, K-leak, and TC Ih changes using N3 or state 59. | These changes altered timing and waveform sharpness, but none clearly separated the slow activity from N3. |
+| 90-97 | Removed the TC T-current or selected cortex-thalamus connections in short runs with a direct negative TC current. | These tests examined which currents and connections affected the pattern rather than searching for a final candidate. |
+| 98-106 | Varied PYR-to-TC and TC-to-cortex excitation, separately and together, using the same TC current. | Some states produced shorter bouts. State 99 was repeated, but remained irregular and highly N3-like. |
+
+Not every defined state in these ranges was run.
+
 ## Current results
 
 Values below are mean +/- SD across three runs with different random seeds,
