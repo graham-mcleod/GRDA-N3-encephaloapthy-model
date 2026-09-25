@@ -797,6 +797,13 @@ else: #if do_sleepstates != True, then just simulate one sleep state
             init_AMPA_pyrpyr = n3_sub_recur_moderate
             init_gkl_pyr = n3_sub_gkl_pyr
             init_gkl_inh = n3_sub_gkl_inh
+    elif 49 <= sleep_state <= 106:
+        raise ValueError(
+            "State %d was run for the published state atlas (states 49-106), "
+            "but its parameters are not defined in this repository. Add its "
+            "definition here from the copy of config.py that produced those "
+            "runs." % sleep_state
+        )
     else:
         raise ValueError(
             "Unsupported sleep_state. Implemented states: 0=wake, 1=N2, "
