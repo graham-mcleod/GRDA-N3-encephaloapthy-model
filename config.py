@@ -46,7 +46,8 @@ h.Random().Random123_globalindex(randSeed) #this changes ALL Random123 streams
 # this is True if you want to run through sleep states, according to
 # Wake->N2->N3->REM->N2 make this False if you want to just simulate one state
 # of vigilance (in which case, select that state by setting the appropriate
-# value for 'sleep_state')
+# value for 'sleep_state'). FINK_SLEEPSTATES=1 selects the sweep without
+# editing this file.
 
 # if do_sleepstates is set to True, then sleep_state will be ignored.
 # State IDs: 0=wake, 1=N2, 2=N3, 3=REM, 4=reserved for the later GRDA
@@ -64,7 +65,7 @@ h.Random().Random123_globalindex(randSeed) #this changes ALL Random123 streams
 # 30--33=stable-background cortical probes,
 # 34--40=N3-centered subtraction and decoupling probes,
 # 41--48=N3-derived fine brackets and mechanism-transfer probes.
-do_sleepstates = False
+do_sleepstates = os.environ.get("FINK_SLEEPSTATES", "0") == "1"
 sleep_state = int(os.environ.get("FINK_STATE", "18"))
 
 # determine whether or not to record LFP
