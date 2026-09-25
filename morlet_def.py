@@ -53,7 +53,8 @@ def morlet_wav(x, srate, sigma, flo, fhi, deltaf):
         Transform[start:start+block, :] = scipy.fft.ifft(Xk * W, axis=-1, workers=-1)
         
     #throw away the part of Transform that corresponded to zero-padded portion of 'x'
-    Transform=Transform[:,1:N_orig+1]
+    #(columns 0..N_orig-1; the Matlab original's 1:N_orig is 1-based)
+    Transform=Transform[:,:N_orig]
     #compute phases and modulus 
     Phases = np.arctan2(np.imag(Transform), np.real(Transform))
     Modulus = np.abs(Transform)
