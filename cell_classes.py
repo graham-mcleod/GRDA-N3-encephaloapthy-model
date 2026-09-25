@@ -69,6 +69,7 @@ class Cell(object):
         
     def plotTraces(self):
         """Plot the recorded traces"""
+        from matplotlib import pyplot
         pyplot.figure() # Default figsize is (8,6)
         somaPlot = pyplot.plot(self.tVec, self.soma_v_vec, color='black')
         pyplot.legend(somaPlot, ['soma'])

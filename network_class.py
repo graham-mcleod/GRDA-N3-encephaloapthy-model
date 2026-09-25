@@ -498,21 +498,21 @@ class Net:
                     self.lfp_sum += d[3] #compute cortical LFP, summed over contributions from nodes on all hosts
                 
     def plotRaster(self):
-
+        from matplotlib import pyplot
         print('Plotting raster ...')
         pyr_indices=[i for (i, val) in enumerate(self.idVecAll) if val<self.Npyr] # get the indices of pyramidal cell spikes
         inh_indices=[i for (i, val) in enumerate(self.idVecAll) if (self.Npyr<=val<(self.Npyr+self.Ninh))] #find indices (within self.idVecAll) of inhibitory cell spikes
         re_indices=[i for (i, val) in enumerate(self.idVecAll) if ((self.Npyr+self.Ninh)<=val<(self.Npyr+self.Ninh+self.Nre))]
         tc_indices=[i for (i, val) in enumerate(self.idVecAll) if ((self.Npyr+self.Ninh+self.Nre)<=val)]
         
-        pyr_tVec=[net.tVecAll[val] for val in pyr_indices] #create spike time vector of just pyramidal cells
-        pyr_id=[net.idVecAll[val] for val in pyr_indices] #create corresponding spike id vector for just pyramidal cells
-        inh_tVec=[net.tVecAll[val] for val in inh_indices]
-        inh_id=[net.idVecAll[val] for val in inh_indices]
-        re_tVec=[net.tVecAll[val] for val in re_indices]
-        re_id=[net.idVecAll[val] for val in re_indices]
-        tc_tVec=[net.tVecAll[val] for val in tc_indices]
-        tc_id=[net.idVecAll[val] for val in tc_indices]
+        pyr_tVec=[self.tVecAll[val] for val in pyr_indices] #create spike time vector of just pyramidal cells
+        pyr_id=[self.idVecAll[val] for val in pyr_indices] #create corresponding spike id vector for just pyramidal cells
+        inh_tVec=[self.tVecAll[val] for val in inh_indices]
+        inh_id=[self.idVecAll[val] for val in inh_indices]
+        re_tVec=[self.tVecAll[val] for val in re_indices]
+        re_id=[self.idVecAll[val] for val in re_indices]
+        tc_tVec=[self.tVecAll[val] for val in tc_indices]
+        tc_id=[self.idVecAll[val] for val in tc_indices]
         
         pyplot.figure()
         pyplot.scatter(pyr_tVec,pyr_id,marker="o",s=5,color='red')
@@ -532,6 +532,6 @@ class Net:
         
     def saveData(self):
         print('Saving data ...')
-        dataSave = {'Npyr': self.Npyr, 'Nbask': self.Ninh, 'Nre':self.Nre, 'Ntc':self.Ntc, 'tVec': self.tVecAll, 'idVec': self.idVec} #may want to add in all the connectivity and stimulation parameters at some point
+        dataSave = {'Npyr': self.Npyr, 'Nbask': self.Ninh, 'Nre':self.Nre, 'Ntc':self.Ntc, 'tVec': self.tVecAll, 'idVec': self.idVecAll} #may want to add in all the connectivity and stimulation parameters at some point
         with open('output.pkl', 'wb') as f:
             pickle.dump(dataSave, f)
