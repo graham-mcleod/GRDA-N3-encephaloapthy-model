@@ -18,6 +18,10 @@ from analyze_lfp_states import analyze_run, available_cpus
 
 
 STATE_LABELS = {
+    0: "wake",
+    1: "N2",
+    2: "N3",
+    3: "REM",
     5: "SAE-theta starter",
     6: "SAE-delta starter",
     7: "theta starter with recurrent cortical drive restored",
@@ -59,7 +63,15 @@ STATE_LABELS = {
     43: "recurrence 2.10 and cortical K leak -5%",
     44: "recurrence 2.20 and cortical K leak -5%",
     45: "state 35 plus N2 thalamic intrinsic module",
+    46: "state 40 plus N2 thalamic intrinsic module",
+    47: "state 35 plus RE->TC GABA-A -20%",
+    48: "state 40 plus RE->TC GABA-A -20%",
 }
+
+
+def state_label(state: int) -> str:
+    """Atlas label; states defined outside this repository get a generic one."""
+    return STATE_LABELS.get(state, f"state {state}")
 
 
 def robust_limit(values: np.ndarray) -> tuple[float, float]:
@@ -151,7 +163,7 @@ def make_page(
     fig.text(
         0.085,
         0.895,
-        STATE_LABELS[state],
+        state_label(state),
         fontsize=13,
         color="#294f61",
     )
@@ -262,9 +274,9 @@ def main() -> None:
     args = parser.parse_args()
 
     states = list(range(args.first_state, args.last_state + 1))
-    missing_labels = [state for state in states if state not in STATE_LABELS]
-    if missing_labels:
-        raise ValueError(f"Missing atlas labels for states {missing_labels}")
+    unlabeled = [state for state in states if state not in STATE_LABELS]
+    if unlabeled:
+        print(f"no descriptive labels for states {unlabeled}; using 'state N'")
 
     rows: list[dict[str, object]] = []
     args.output.parent.mkdir(parents=True, exist_ok=True)
