@@ -1,25 +1,36 @@
+"""Autocorrelation and power spectrum of the LFP of two or more states.
+Example: python plot_lfp_acf_psd.py 0 2 --seed 1 --nhost 12
+"""
+import argparse
+from pathlib import Path
+
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt, welch
 
-DUR_MS = 120000.0
+from analyze_lfp_states import resolve_output_file
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("states", nargs="*", type=int, default=[0, 2], help="state IDs (default: 0 2)")
+parser.add_argument("--seed", type=int, default=1)
+parser.add_argument("--nhost", type=int, default=8, help="MPI rank count in the filename (another is used if it is the only one)")
+parser.add_argument("--root", type=Path, default=Path("."), help="directory with the simulation outputs")
+parser.add_argument("--output", help="PNG filename")
+parser.add_argument("--duration-ms", type=float, default=120000.0)
+args = parser.parse_args()
+
+DUR_MS = args.duration_ms
 SKIP_S = 5.0            # drop startup transient
 TARGET_FS = 250.0      # downsample target (Hz)
-files = [("lfp_state0_nhost=8.txt", "wake"),
-         ("lfp_state2_nhost=8.txt", "NREM3")]
+LABELS = {0: "wake", 1: "N2", 2: "NREM3", 3: "REM"}
+files = [(resolve_output_file(args.root, "lfp", s, args.seed, args.nhost), LABELS.get(s, f"state {s}"))
+         for s in args.states]
 
-def load_fast(fn):
-    try:
-        import pandas as pd
-        return pd.read_csv(fn, header=None, sep=r"\s+").iloc[:, 0].to_numpy(float)
-    except Exception:
-        return np.loadtxt(fn)
-
-fig, ax = plt.subplots(2, 2, figsize=(14, 8))
+fig, ax = plt.subplots(len(files), 2, figsize=(14, 4 * len(files)), squeeze=False)
 for i, (fn, lbl) in enumerate(files):
-    y = load_fast(fn)
+    y = np.loadtxt(fn)
     y = y - y.mean()
     dt = DUR_MS / len(y)                       # ms per sample
     fs = 1000.0 / dt                           # Hz
@@ -55,5 +66,6 @@ for i, (fn, lbl) in enumerate(files):
     print(f"{lbl}: spectral peak = {fpk:.2f} Hz")
 
 plt.tight_layout()
-plt.savefig("lfp_acf_psd.png", dpi=120)
-print("wrote lfp_acf_psd.png")
+output = args.output or "lfp_acf_psd.png"
+plt.savefig(output, dpi=120)
+print(f"wrote {output}")

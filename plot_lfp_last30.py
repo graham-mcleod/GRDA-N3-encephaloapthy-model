@@ -1,23 +1,36 @@
+"""Final seconds of the LFP of two or more states.
+Example: python plot_lfp_last30.py 0 2 --seed 1 --nhost 12
+"""
+import argparse
+from pathlib import Path
+
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-DUR_MS = 120000.0
-WIN_S = 30.0                       # last N seconds to show
-files = [("lfp_state0_nhost=8.txt", "wake"),
-         ("lfp_state2_nhost=8.txt", "NREM3")]
+from analyze_lfp_states import resolve_output_file
 
-def load_fast(fn):
-    try:
-        import pandas as pd
-        return pd.read_csv(fn, header=None, sep=r"\s+").iloc[:, 0].to_numpy(float)
-    except Exception:
-        return np.loadtxt(fn)
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("states", nargs="*", type=int, default=[0, 2], help="state IDs (default: 0 2)")
+parser.add_argument("--seed", type=int, default=1)
+parser.add_argument("--nhost", type=int, default=8, help="MPI rank count in the filename (another is used if it is the only one)")
+parser.add_argument("--root", type=Path, default=Path("."), help="directory with the simulation outputs")
+parser.add_argument("--output", help="PNG filename")
+parser.add_argument("--duration-ms", type=float, default=120000.0)
+parser.add_argument("--window-s", type=float, default=30.0, help="seconds to show (default: 30)")
+args = parser.parse_args()
 
-fig, ax = plt.subplots(2, 1, figsize=(13, 7), sharex=True)
+DUR_MS = args.duration_ms
+WIN_S = args.window_s                       # last N seconds to show
+LABELS = {0: "wake", 1: "N2", 2: "NREM3", 3: "REM"}
+files = [(resolve_output_file(args.root, "lfp", s, args.seed, args.nhost), LABELS.get(s, f"state {s}"))
+         for s in args.states]
+
+fig, ax = plt.subplots(len(files), 1, figsize=(13, 3.5 * len(files)), sharex=True, squeeze=False)
+ax = ax[:, 0]
 for a, (fn, lbl) in zip(ax, files):
-    y = load_fast(fn)
+    y = np.loadtxt(fn)
     y = y - y.mean()
     dt = DUR_MS / len(y)                   # ms per sample
     fs = 1000.0 / dt                       # Hz
@@ -30,7 +43,8 @@ for a, (fn, lbl) in zip(ax, files):
     a.plot(ts, ys, lw=0.5, color="navy")
     a.set_ylabel("LFP (a.u.)")
     a.set_title(f"{lbl}   (last {WIN_S:.0f} s)")
-ax[1].set_xlabel("time (s)")
+ax[-1].set_xlabel("time (s)")
 plt.tight_layout()
-plt.savefig("lfp_last30.png", dpi=120)
-print("wrote lfp_last30.png")
+output = args.output or "lfp_last30.png"
+plt.savefig(output, dpi=120)
+print(f"wrote {output}")

@@ -19,30 +19,35 @@ import numpy as np
 from scipy import signal, stats
 
 
-def resolve_lfp_file(root: Path, state: int, seed: int, nhost: int) -> Path:
-    """Resolve new seed-tagged outputs, retaining seed-1 legacy support.
+def resolve_output_file(root: Path, kind: str, state: int, seed: int, nhost: int) -> Path:
+    """Resolve an output file (kind "lfp", "vcort", or "raster"), retaining
+    seed-1 legacy names.
 
     Runs with different MPI rank counts differ only at floating-point rounding
     level, so when no output exists for the requested ``nhost``, a single
     output from another rank count is used instead (the chosen file is
     reported in ``source_file``).
     """
-    seeded = root / f"lfp_state{state}_seed{seed}_nhost={nhost}.txt"
+    seeded = root / f"{kind}_state{state}_seed{seed}_nhost={nhost}.txt"
     if seeded.exists():
         return seeded
-    legacy = root / f"lfp_state{state}_nhost={nhost}.txt"
+    legacy = root / f"{kind}_state{state}_nhost={nhost}.txt"
     if seed == 1 and legacy.exists():
         return legacy
-    others = sorted(root.glob(f"lfp_state{state}_seed{seed}_nhost=*.txt"))
+    others = sorted(root.glob(f"{kind}_state{state}_seed{seed}_nhost=*.txt"))
     if len(others) == 1:
         return others[0]
     if others:
         names = ", ".join(path.name for path in others)
         raise FileNotFoundError(
-            f"No nhost={nhost} LFP output for state {state}, seed {seed}; "
+            f"No nhost={nhost} {kind} output for state {state}, seed {seed}; "
             f"choose one of {names} with --nhost"
         )
-    raise FileNotFoundError(f"No LFP output found for state {state}, seed {seed}")
+    raise FileNotFoundError(f"No {kind} output found for state {state}, seed {seed}")
+
+
+def resolve_lfp_file(root: Path, state: int, seed: int, nhost: int) -> Path:
+    return resolve_output_file(root, "lfp", state, seed, nhost)
 
 
 def load_eegband(
