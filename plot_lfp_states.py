@@ -156,6 +156,12 @@ def resolve_lfp_file(state):
     legacy = Path(f"lfp_state{state}_nhost={args.nhost}.txt")
     if args.seed == 1 and legacy.exists():
         return str(legacy)
+    # runs with different MPI rank counts differ only at floating-point
+    # rounding level, so accept a single output from another rank count when
+    # the requested one is absent
+    others = sorted(Path(".").glob(f"lfp_state{state}_seed{args.seed}_nhost=*.txt"))
+    if len(others) == 1:
+        return str(others[0])
     return str(seeded)
 
 

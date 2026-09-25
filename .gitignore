@@ -30,3 +30,7 @@ nrnmech.dll
 
 # Generated plots in the repository root. Curated figures belong in docs/figures/.
 /*.png
+
+# Machine-local parallel layout calibration and mechanism build log (run_sweep.py)
+/.parallel_layout.json
+/nrnivmodl.log

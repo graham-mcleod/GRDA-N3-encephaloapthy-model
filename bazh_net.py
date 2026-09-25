@@ -14,8 +14,19 @@ runtag = (
 )
 h('load_file("stdgui.hoc")') # need this instead of import gui to get the simulation to be reproducible and not give an LFP flatline
 from network_class import Net
+from lfp_recorder import CorticalFieldRecorder
 
 h('CVode[0].use_fast_imem(1)') #see use_fast_imem() at https://www.neuron.yale.edu/neuron/static/new_doc/simctrl/cvode.html  
+
+def write_trace(stream, values):
+    '''write one value per line in the legacy "%.3f " format, formatting a whole chunk in one operation'''
+    if len(values):
+        stream.write(("%.3f \n" * len(values)) % tuple(values.tolist()))
+
+def write_raster(stream, times, ids):
+    '''write "time  gid" lines in the legacy format, formatting a whole chunk in one operation'''
+    if len(times):
+        stream.write(("%.3f  %g\n" * len(times)) % tuple(np.column_stack((times, ids)).ravel().tolist()))
   
 def onerun(randSeed,Npyr,Ninh,Nre,Ntc):
        
@@ -43,8 +54,7 @@ def onerun(randSeed,Npyr,Ninh,Nre,Ntc):
             cort_secs.append(sec)
          
     if config.doextra:
-        recording_callback = (config.callback, cort_secs)
-        h.cvode.extra_scatter_gather(0,recording_callback)  #this tells NEURON to call 'callback' on every time step, in order to compute LFP
+        recorder = CorticalFieldRecorder(cort_secs) #records summed cortical voltage and LFP on every time step (see lfp_recorder.py)
     
     '''if do_sleepstates==True, specify how parameters should change to induce different sleep states (see lines 640-777 of C++ main.cpp)'''
     if config.do_sleepstates:
@@ -166,6 +176,8 @@ def onerun(randSeed,Npyr,Ninh,Nre,Ntc):
         h.frecord_init() 
        
     # run sim and gather spikes
+    if config.nthread > 1:
+        config.pc.nthread(config.nthread) #split this rank's cells among NEURON threads
     config.pc.set_maxstep(10) #see https://www.neuron.yale.edu/neuron/static/new_doc/modelspec/programmatic/network/parcon.html#ParallelContext.set_maxstep, as well as section 2.4 of the Lytton/Salvador paper
     h.dt = 0.025
     
@@ -175,13 +187,14 @@ def onerun(randSeed,Npyr,Ninh,Nre,Ntc):
     
     if config.idhost==0: 
         print(
-            "Configuration: state=%d seed=%d duration_ms=%g nhost=%d "
+            "Configuration: state=%d seed=%d duration_ms=%g nhost=%d nthread=%d "
             "Beta_GABA_A=%g Beta_GABA_A_D2=%g"
             % (
                 config.sleep_state,
                 config.randSeed,
                 config.duration,
                 config.nhost,
+                config.nthread,
                 config.init_Beta_GABA_A,
                 config.init_Beta_GABA_A_D2,
             )
@@ -241,26 +254,20 @@ def onerun(randSeed,Npyr,Ninh,Nre,Ntc):
         else:
             config.pc.psolve(config.duration)
             
-        net.gatherSpikes()  # gather spikes from all nodes onto master node
-        if config.doextra: net.gatherLFP() #gather LFP data
+        if config.doextra:
+            v_part, lfp_part = recorder.collect() #this host's summed cortical voltage and LFP for every step of this chunk
+        else:
+            v_part = lfp_part = None
+        net.gatherChunk(v_part, lfp_part)  # gather spikes (and LFP data) from all nodes onto master node
         
         if(config.idhost==0):
-            for i in range(len(net.tVecAll)): #print raster data to file
-                raster_file.write("%.3f  %g\n" % (net.tVecAll[i], net.idVecAll[i])) # use the bash command 'sort -k 1n,1n -k 2n,2n raster_nhost=4 > raster_nhost=4_sorted' to sort the raster plots when nhost>1
-            net.tVecAll = [] #reset the raster vectors that aggregate the results from all nodes, so they do not grow too large as the simulation progresses
-            net.idVecAll = []
-            
+            write_raster(raster_file, net.tVecAll, net.idVecAll) # use the bash command 'sort -k 1n,1n -k 2n,2n raster_nhost=4 > raster_nhost=4_sorted' to sort the raster plots when nhost>1
             if config.doextra:
-                for i in range(len(net.v_sum)): #print cortical voltage data to file
-                    vcort_file.write("%.3f \n" % net.v_sum[i])
-                for i in range(len(net.lfp_sum)): #print LFP data to file
-                    lfp_file.write("%.3f \n" % net.lfp_sum[i])
+                write_trace(vcort_file, net.v_sum) #print cortical voltage data to file
+                write_trace(lfp_file, net.lfp_sum) #print LFP data to file
                     
         net.tVec.resize(0) #reset the raster vectors on each individual node, so they do not grow too large as the simulation progresses
         net.idVec.resize(0)
-        if config.doextra:
-            config.v_rec=[] #reset list to being empty
-            config.lfp_rec=[] #reset list to being empty
             
         t_curr = t_curr + config.t_seg
     
@@ -290,8 +297,6 @@ def onerun(randSeed,Npyr,Ninh,Nre,Ntc):
         #net.cells[plot_cell].plotTraces()'''
         
     del net
-    if config.doextra:
-        h.cvode.extra_scatter_gather_remove(recording_callback) #removes 'callback', so that we don't have more and more callbacks on progressive iterations
 
 onerun(config.randSeed,config.Npyr,config.Ninh,config.Nre,config.Ntc)
 

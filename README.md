@@ -12,7 +12,7 @@ model of sepsis-associated encephalopathy.
 
 ## What changed from Fink et al.
 
-The underlying receptor and channel mechanisms are unchanged. Synaptic, intrinsic, and GABA-A timing parameters were modified (preserving original defaults). GABA-A and GABA-B receptor mechanisms existed but scaled multiple pathway strengths shared a single multiplier; these were separated.
+The underlying receptor and channel equations are unchanged (the mechanism files were only made thread-safe; see [Performance](#performance)). Synaptic, intrinsic, and GABA-A timing parameters were modified (preserving original defaults). GABA-A and GABA-B receptor mechanisms existed but scaled multiple pathway strengths shared a single multiplier; these were separated.
 
 | File | Change |
 |---|---|
@@ -20,6 +20,10 @@ The underlying receptor and channel mechanisms are unchanged. Synaptic, intrinsi
 | `bazh_net.py` | Applies settings, records parameters, and labels outputs by state and run. |
 | `network_class.py` | Separates six thalamic connections that previously shared gains. |
 | `cell_classes.py` | Makes selected pyramidal-cell conductances configurable. |
+| `lfp_recorder.py` | Records the summed cortical voltage and LFP without per-time-step Python work. |
+| `run_sweep.py` | Launches single runs and sweeps, compiling the mechanisms when needed. |
+| `parallel_layout.py` | Detects cores and MPI, chooses the parallel layout, and calibrates it per machine. |
+| `mod/` | Makes seven synapse mechanisms and `xtra.mod` thread-safe. |
 
 Fink et al.'s README is preserved unchanged.
 
@@ -106,15 +110,54 @@ python build_state_atlas.py
 
 ## Running a static state
 
-Compile the mechanisms as described in `README_FINK_ET_AL.md`, activate the Python environment, and run a state explicitly. On the tested Apple Silicon setup with Open MPI:
+Install the Python packages (`pip install -r requirements.txt`) and, for parallel runs, an MPI library. Without MPI, simulations run on NEURON threads instead, which is slower.
+
+| System | MPI |
+|---|---|
+| macOS | `brew install open-mpi` |
+| Debian/Ubuntu | `sudo apt install openmpi-bin libopenmpi-dev` |
+| Fedora/RHEL | `sudo dnf install openmpi`, then `module load mpi/openmpi-$(uname -m)` |
+| conda | `conda install -c conda-forge openmpi` |
+| Cluster | load the site's MPI module |
+
+`run_sweep.py` runs one or many (state, seed) simulations and writes a `run_state<S>_seed<N>.log` for each. It detects the machine's physical (performance) cores and its MPI installation, respects CPU affinity and container limits, compiles the mechanisms when `mod/` is new or has changed, and checks MPI with a two-rank test before using it. Run `--calibrate` once per machine: it times short simulations in candidate layouts (1-3 minutes) and saves the fastest in `.parallel_layout.json`, which later runs on the same hardware use automatically. Without a calibration, a conservative default is used.
 
 ```bash
-export MPI_LIB_NRN_PATH=$(brew --prefix open-mpi)/lib/libmpi.dylib
-FINK_STATE=35 FINK_SEED=1 FINK_DURATION_MS=120000 \
-  mpiexec -n 8 nrniv -mpi -python bazh_net.py 2>&1 | tee run_state35_seed1.log
+python run_sweep.py --calibrate                    # once per machine
+python run_sweep.py --states 35                    # one run
+python run_sweep.py --states 35 40 42 --seeds 1-3  # 9 runs
+python run_sweep.py --states 42 --ranks 8          # reproduce an earlier 8-rank run exactly
+python run_sweep.py --states 41-44 --dry-run       # show the detected machine, layout, and commands
 ```
 
-Outputs are named by state, seed, and MPI rank count. A 120-second run takes approximately 11--12 minutes under an otherwise light load. See `requirements.txt` for tested Python packages; MPI is a system dependency.
+`--dry-run` prints the exact command for the current machine. Manually, one run is:
+
+```bash
+FINK_STATE=35 FINK_SEED=1 FINK_DURATION_MS=120000 \
+  mpiexec -n <cores> nrniv -mpi -python bazh_net.py 2>&1 | tee run_state35_seed1.log
+```
+
+If NEURON cannot find the MPI library (common on macOS), set `MPI_LIB_NRN_PATH`, for example `export MPI_LIB_NRN_PATH=$(brew --prefix open-mpi)/lib/libmpi.dylib`; `run_sweep.py` does this automatically. Without MPI, `FINK_NTHREAD=<cores> nrniv -python bazh_net.py` runs the same simulation on NEURON threads. `--cores` (or `FINK_CORES`) limits the cores used, `--mpiexec` (or `FINK_MPIEXEC`) selects the launcher, e.g. `srun`, `FINK_MPIEXEC_ARGS` adds launcher options, and `FINK_VERBOSE=1` restores the original per-cell setup printout. `python -m unittest discover tests` checks the layout logic, including simulated Linux machines.
+
+Outputs are named by state, seed, and MPI rank count. The analysis scripts use the `--nhost` (default 8) file when present and otherwise the single available rank count. See `requirements.txt` for tested Python packages.
+
+### Performance
+
+Measured on an Apple M3 Max (12 performance and 4 efficiency cores), state 35, 120 simulated seconds:
+
+| Code and layout | Wall time |
+|---|---:|
+| Original code, 8 MPI ranks | 9.4 min |
+| Current code, 8 MPI ranks | 5.5 min |
+| Current code, 12 MPI ranks | 4.7 min |
+
+- **LFP recording.** The original code summed the voltage and LFP of every cortical segment in a Python callback on every 0.025-ms step, which cost about as much as the simulation itself. `lfp_recorder.py` records the same values in C (`Vector.record`) and sums them with NumPy once per 50-ms chunk. The output files are byte-identical.
+- **Parallel layout.** By default only physical (performance) cores are used: every rank waits for the slowest at each spike exchange, so hyperthreads and efficiency cores usually slow the whole job (`--calibrate` tests them). On the M3 Max, 16 ranks including the efficiency cores were twice as slow as 12, and MPI ranks outperformed NEURON threads (2 simulated seconds: 3.7 s on 12 ranks, 6.3 s on 12 threads).
+- **Sweeps.** On the M3 Max, concurrent narrower MPI jobs gave the same throughput as full-width runs one after another, whereas without MPI, single-thread runs side by side gave about 40% more throughput than one 12-thread run at a time. `--calibrate` measures this on each machine.
+- **Thread safety.** Seven synapse mechanisms and `xtra.mod` are `THREADSAFE`. `Rinf` and `Rtau` became per-instance `RANGE` variables because NEURON cannot give `NET_RECEIVE` blocks thread-specific globals; every instance computes the same values, so the output files are byte-identical.
+- **Analysis.** `analyze_lfp_states.py` and `build_state_atlas.py` process states in parallel (`--jobs`).
+
+A run with the same MPI rank count as before reproduces the original output files byte for byte (checked for a full 120-s run at 8 ranks and for 2-s runs at 1, 2, and 12 ranks). A different rank count changes the order in which simultaneous synaptic events are summed, so membrane voltages differ at floating-point rounding level (median ~1e-13 mV), which action potentials can briefly amplify to ~1e-3 mV. In the full 120-s run at 8 versus 12 ranks, all 511,921 spikes were identical, and 32 of 4.8 million LFP samples differed, each by 0.001. Identical spikes across rank counts are therefore expected but not guaranteed: use `--ranks 8` to reproduce an earlier 8-rank run exactly, and `compare_runs.py` to compare two runs. NEURON threads gave identical spikes and byte-identical LFP and vcort in 2-s tests with 1 to 8 threads.
 
 ## Limitations
 - Most states have one run. Selected states have additional runs with different random seeds.

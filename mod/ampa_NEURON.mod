@@ -9,9 +9,11 @@ ENDCOMMENT
 
 NEURON{
 	POINT_PROCESS AMPA_NEURON
+	THREADSAFE : allows NEURON threads; see the RANGE Rinf, Rtau note below
 	RANGE g
 	NONSPECIFIC_CURRENT i
-	GLOBAL Cdur, Alpha, Beta, Erev, Rinf, Rtau
+	GLOBAL Cdur, Alpha, Beta, Erev
+	RANGE Rinf, Rtau : computed identically by every instance in INITIAL; RANGE rather than GLOBAL because NET_RECEIVE cannot read thread-specific GLOBALs of a THREADSAFE mechanism
 }
 
 UNITS{

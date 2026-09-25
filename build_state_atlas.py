@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 import matplotlib
@@ -13,7 +14,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
-from analyze_lfp_states import analyze_run
+from analyze_lfp_states import analyze_run, available_cpus
 
 
 STATE_LABELS = {
@@ -213,6 +214,28 @@ def make_page(
     return fig
 
 
+def analyze_and_render_png(
+    root: Path,
+    state: int,
+    seed: int,
+    nhost: int,
+    page: Path,
+    page_number: int,
+    page_count: int,
+) -> tuple[dict[str, object], np.ndarray, float]:
+    """Worker: analyze one state and write its PNG page."""
+    row, eeg, fs = analyze_run(
+        root, state, seed, nhost, 120.0, 200.0, (0.5, 30.0), 10.0, 119.0
+    )
+    fig = make_page(
+        state, seed, str(row["source_file"]), eeg, fs, row, page_number, page_count
+    )
+    page.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(page, dpi=170, facecolor="white")
+    plt.close(fig)
+    return row, eeg, fs
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("."))
@@ -233,6 +256,9 @@ def main() -> None:
     parser.add_argument(
         "--page-dir", type=Path, default=Path("tmp/pdfs/state_atlas")
     )
+    parser.add_argument(
+        "--jobs", type=int, help="parallel worker processes (default: all CPUs)"
+    )
     args = parser.parse_args()
 
     states = list(range(args.first_state, args.last_state + 1))
@@ -242,7 +268,22 @@ def main() -> None:
 
     rows: list[dict[str, object]] = []
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with PdfPages(args.output) as document:
+    # Worker processes analyze the states and write the PNG pages in
+    # parallel; this process appends the pages to the PDF in state order.
+    page_numbers = range(1, len(states) + 1)
+    work = (
+        [args.root] * len(states),
+        states,
+        [args.seed] * len(states),
+        [args.nhost] * len(states),
+        [args.page_dir / f"state_{state:02d}.png" for state in states],
+        page_numbers,
+        [len(states)] * len(states),
+    )
+    jobs = min(len(states), args.jobs or available_cpus())
+    with ProcessPoolExecutor(max_workers=jobs) as pool, PdfPages(
+        args.output
+    ) as document:
         metadata = document.infodict()
         metadata["Title"] = (
             f"SAE / RDA exploratory LFP state atlas: "
@@ -252,20 +293,9 @@ def main() -> None:
         metadata["Subject"] = (
             "Seed-1 full and final-30-second model LFP traces"
         )
-        for page_number, state in enumerate(states, start=1):
-            row, eeg, fs = analyze_run(
-                args.root,
-                state,
-                args.seed,
-                args.nhost,
-                120.0,
-                200.0,
-                (0.5, 30.0),
-                10.0,
-                119.0,
-            )
+        results = pool.map(analyze_and_render_png, *work)
+        for page_number, state, (row, eeg, fs) in zip(page_numbers, states, results):
             rows.append(row)
-            page = args.page_dir / f"state_{state:02d}.png"
             fig = make_page(
                 state,
                 args.seed,
@@ -276,8 +306,6 @@ def main() -> None:
                 page_number,
                 len(states),
             )
-            page.parent.mkdir(parents=True, exist_ok=True)
-            fig.savefig(page, dpi=170, facecolor="white")
             document.savefig(fig, dpi=170, facecolor="white")
             plt.close(fig)
             print(f"rendered state_{state}")

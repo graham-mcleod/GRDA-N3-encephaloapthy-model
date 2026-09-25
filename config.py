@@ -27,6 +27,18 @@ nhost = int(pc.nhost())
 duration = float(os.environ.get("FINK_DURATION_MS", "120000.0")) # ms
 t_seg=50.0 #(ms) simulation time between each data dump to node 0
 
+# NEURON threads per MPI rank (all mechanisms are THREADSAFE). Threads and MPI
+# ranks can be combined; see run_sweep.py. Output files are reproduced byte for
+# byte only with the same MPI rank count; other layouts differ at floating-point
+# rounding level (see "Performance" in README.md).
+nthread = int(os.environ.get("FINK_NTHREAD", "1"))
+if nthread < 1:
+    raise ValueError("FINK_NTHREAD must be at least 1")
+
+# Set FINK_VERBOSE=1 to restore the per-cell and per-section setup printout
+# and the per-chunk gather messages.
+verbose = os.environ.get("FINK_VERBOSE", "0") not in ("", "0")
+
 # set randomizer seed
 randSeed = int(os.environ.get("FINK_SEED", "1")) # global RNG seed
 h.Random().Random123_globalindex(randSeed) #this changes ALL Random123 streams
@@ -67,24 +79,10 @@ XE=2000.0
 YE=0.0 #y coordinate of recording electrode (in micrometers)
 ZE=0.0 #z coordinate of recording electrode (in micrometers) 
 
-if doextra:
-    # the following code allows for Python to call a function at every time
-    # step, which will allow us to compute both the summed cortical voltage and
-    # the cortical biophysical LFP at every time step. code taken from
-    # https://www.neuron.yale.edu/phpBB/viewtopic.php?f=2&t=3389&p=14342&hilit=extracellular+recording+parallel#p14342
-    v_rec=[]
-    lfp_rec=[]
-    def callback(cort_secs):
-        v_cort = 0
-        lfp_cort = 0
-        for sec in cort_secs:
-                for seg in sec:
-                    # add up voltages in all segments of cortical cells
-                    v_cort = v_cort + seg.v
-                    # add up biophysical LFP contributions in all segments of cortical cells
-                    lfp_cort = lfp_cort + seg.er_xtra
-        v_rec.append(v_cort)
-        lfp_rec.append(lfp_cort)
+# The summed cortical voltage and biophysical LFP are recorded on every time
+# step by lfp_recorder.CorticalFieldRecorder (C-level Vector.record plus one
+# NumPy reduction per data dump), which replaced a per-step Python callback
+# and produces bit-identical sums.
 
 # set numbers of each cell type (see C++ code network.cfg); note 
 # that the method 'connectCells' assumes Npyr=500, Ninh=100, Nre=100, and 

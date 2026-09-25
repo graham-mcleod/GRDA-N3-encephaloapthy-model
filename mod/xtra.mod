@@ -85,6 +85,7 @@ ENDCOMMENT
 
 NEURON {
 	SUFFIX xtra
+	THREADSAFE : allows NEURON threads; the im POINTER targets i_membrane_ of the same segment, which is always integrated by the same thread
 	RANGE rx, er
 	RANGE x, y, z
 :	GLOBAL is

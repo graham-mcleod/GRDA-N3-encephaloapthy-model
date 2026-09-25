@@ -12,8 +12,10 @@ ENDCOMMENT
 
 NEURON{
 	POINT_PROCESS NMDA_D1
+	THREADSAFE : allows NEURON threads; see the RANGE Rinf, Rtau note below
 	NONSPECIFIC_CURRENT i
-	GLOBAL deadtime, Cdur, Alpha, Beta,  Rinf, Rtau, Use :values of global variables are the same within a mechanism, but not across mechanisms (e.g., AMPA's deadtime may have a different value than AMPA_D1's deadtime)
+	GLOBAL deadtime, Cdur, Alpha, Beta, Use :values of global variables are the same within a mechanism, but not across mechanisms (e.g., AMPA's deadtime may have a different value than AMPA_D1's deadtime)
+	RANGE Rinf, Rtau : computed identically by every instance in INITIAL; RANGE rather than GLOBAL because NET_RECEIVE cannot read thread-specific GLOBALs of a THREADSAFE mechanism
 	RANGE g, gmax, Erev
 }
 

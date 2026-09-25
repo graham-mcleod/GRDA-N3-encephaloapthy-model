@@ -13,9 +13,11 @@ ENDCOMMENT
 
 NEURON{
 	POINT_PROCESS AMPA_D2
+	THREADSAFE : allows NEURON threads; each instance owns its Random123 stream (ptr), so the VERBATIM code touches only per-instance state
 	NONSPECIFIC_CURRENT i
 	POINTER ptr
-	GLOBAL Rinf, Rtau, Cdur, Alpha, Beta, mini_fre, SS_denom  :values of global variables are the same within a mechanism, but not across mechanisms (e.g., AMPA's deadtime may have a different value than AMPA_D1's deadtime)
+	GLOBAL Cdur, Alpha, Beta, mini_fre, SS_denom :values of global variables are the same within a mechanism, but not across mechanisms (e.g., AMPA's deadtime may have a different value than AMPA_D1's deadtime)
+	RANGE Rinf, Rtau : computed identically by every instance in INITIAL; RANGE rather than GLOBAL because NET_RECEIVE cannot read thread-specific GLOBALs of a THREADSAFE mechanism
 	RANGE g, gmax,  Erev, gid, syn_index, psp_weight
 }
 

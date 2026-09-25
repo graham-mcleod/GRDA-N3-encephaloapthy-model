@@ -18,6 +18,7 @@ size in frequency (all in Hz).
 """
 
 import numpy as np
+import scipy.fft
 
 def morlet_wav(x, srate, sigma, flo, fhi, deltaf):
     N_orig = len(x)
@@ -35,13 +36,21 @@ def morlet_wav(x, srate, sigma, flo, fhi, deltaf):
     
     freq_samples=srate*np.arange(-N/2,N/2)/N #construct array of frequency values at which you sample the Fourier Transform of the wavelet function (Addison Eq. 2.38); don't need '-1' (as in Matlab code) bc. of how arange works; also, can assume N is divisible by 2 because of above
     
-    for i_f, freq in enumerate(freqvals):
+    #ifftshift is a permutation, so evaluating the wavelet on the shifted frequency
+    #samples gives exactly ifftshift(W)
+    shifted_samples=np.fft.ifftshift(freq_samples)
+    
+    #process the frequencies in blocks: one vectorized expression builds the wavelets
+    #of a block, and their inverse FFTs run together on all CPU cores
+    block=32
+    for start in range(0, num_freqvals, block):
+        freq = freqvals[start:start+block, np.newaxis]
         #construct fourier transform of the Morlet wavelet in such a form that we
         #can use Eq. 2.35 (p. 33, Addison) along with iFFT to determine Transform
         #for specific frequency band. Note that my normalization is not the
         #same as in Addison's textbook.
-        W = np.sqrt(2*np.pi)*sigma*np.exp(-2*np.pi**2*sigma**2*(freq_samples-freq)**2)
-        Transform[i_f:i_f+1, :] = np.fft.ifft(Xk * np.fft.ifftshift(W))
+        W = np.sqrt(2*np.pi)*sigma*np.exp(-2*np.pi**2*sigma**2*(shifted_samples-freq)**2)
+        Transform[start:start+block, :] = scipy.fft.ifft(Xk * W, axis=-1, workers=-1)
         
     #throw away the part of Transform that corresponded to zero-padded portion of 'x'
     Transform=Transform[:,1:N_orig+1]

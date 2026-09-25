@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
+from concurrent.futures import ProcessPoolExecutor
 from fractions import Fraction
 from pathlib import Path
 
@@ -18,13 +20,28 @@ from scipy import signal, stats
 
 
 def resolve_lfp_file(root: Path, state: int, seed: int, nhost: int) -> Path:
-    """Resolve new seed-tagged outputs, retaining seed-1 legacy support."""
+    """Resolve new seed-tagged outputs, retaining seed-1 legacy support.
+
+    Runs with different MPI rank counts differ only at floating-point rounding
+    level, so when no output exists for the requested ``nhost``, a single
+    output from another rank count is used instead (the chosen file is
+    reported in ``source_file``).
+    """
     seeded = root / f"lfp_state{state}_seed{seed}_nhost={nhost}.txt"
     if seeded.exists():
         return seeded
     legacy = root / f"lfp_state{state}_nhost={nhost}.txt"
     if seed == 1 and legacy.exists():
         return legacy
+    others = sorted(root.glob(f"lfp_state{state}_seed{seed}_nhost=*.txt"))
+    if len(others) == 1:
+        return others[0]
+    if others:
+        names = ", ".join(path.name for path in others)
+        raise FileNotFoundError(
+            f"No nhost={nhost} LFP output for state {state}, seed {seed}; "
+            f"choose one of {names} with --nhost"
+        )
     raise FileNotFoundError(f"No LFP output found for state {state}, seed {seed}")
 
 
@@ -126,6 +143,36 @@ def analyze_run(
     return row, eeg, fs
 
 
+def available_cpus() -> int:
+    """CPUs this process may use (respects CPU affinity, e.g. a cluster allocation)."""
+    counter = getattr(os, "process_cpu_count", None) or os.cpu_count
+    return counter() or 1
+
+
+def analyze_runs(
+    root: Path,
+    runs: list[tuple[int, int]],
+    nhost: int,
+    duration_s: float,
+    view_fs: float,
+    band: tuple[float, float],
+    start_s: float,
+    end_s: float,
+    jobs: int | None = None,
+) -> list[tuple[dict[str, object], np.ndarray, float]]:
+    """analyze_run for every (state, seed), in parallel processes; results keep
+    the order of ``runs`` and are identical to sequential calls."""
+    arguments = [
+        (root, state, seed, nhost, duration_s, view_fs, band, start_s, end_s)
+        for state, seed in runs
+    ]
+    jobs = min(len(arguments), jobs or available_cpus())
+    if jobs <= 1:
+        return [analyze_run(*a) for a in arguments]
+    with ProcessPoolExecutor(max_workers=jobs) as pool:
+        return list(pool.map(analyze_run, *zip(*arguments)))
+
+
 def write_csv(rows: list[dict[str, object]], output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", newline="", encoding="utf-8") as stream:
@@ -150,23 +197,24 @@ def main() -> None:
         type=Path,
         default=Path("output/metrics/lfp_state_metrics.csv"),
     )
+    parser.add_argument(
+        "--jobs", type=int, help="parallel worker processes (default: all CPUs)"
+    )
     args = parser.parse_args()
 
-    rows = []
-    for state in args.states:
-        for seed in args.seeds:
-            row, _, _ = analyze_run(
-                args.root,
-                state,
-                seed,
-                args.nhost,
-                args.duration_s,
-                args.view_fs,
-                tuple(args.band),
-                args.start_s,
-                args.end_s,
-            )
-            rows.append(row)
+    runs = [(state, seed) for state in args.states for seed in args.seeds]
+    results = analyze_runs(
+        args.root,
+        runs,
+        args.nhost,
+        args.duration_s,
+        args.view_fs,
+        tuple(args.band),
+        args.start_s,
+        args.end_s,
+        args.jobs,
+    )
+    rows = [row for row, _, _ in results]
     write_csv(rows, args.output)
     print(f"wrote {args.output} ({len(rows)} runs)")
 

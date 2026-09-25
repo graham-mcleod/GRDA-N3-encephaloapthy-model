@@ -13,5 +13,4 @@ inds = np.argsort(raster[:,0])
 raster2 = raster[inds] #re-order the raster so that the earliest spike times come first
 
 with open("raster_nhost=2_sorted.txt", 'w') as raster_file:
-    for i in range(len(raster2)):
-        raster_file.write("%.3f  %g\n" % (raster2[i,0], raster2[i,1]))
+    raster_file.write(("%.3f  %g\n" * len(raster2)) % tuple(raster2[:, :2].ravel().tolist())) # same format as one write per row

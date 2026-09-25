@@ -47,7 +47,7 @@ class Cell(object):
         pass
     
     def associateGid(self):
-        print("self.gid=%d, config.idhost=%d"%(self.gid,config.idhost))
+        if config.verbose: print("self.gid=%d, config.idhost=%d"%(self.gid,config.idhost))
         config.pc.set_gid2node(self.gid, config.idhost)
         nc = h.NetCon(self.soma(0.5)._ref_v, None, sec=self.soma)
         nc.threshold = config.thresh

@@ -80,8 +80,9 @@ class Net:
             cell.associateGid() # associate gid to each cell; if this line generates the error "gid=0 already exists on this process as an output port," then you just need to restart the kernel if using an interactive Python environment
             config.pc.spike_record(cell.gid, self.tVec, self.idVec) # Record spikes of this cell
             
-            print('Created cell %d on host %d out of %d'%(gid, config.idhost, config.nhost) )
-            print('config.pc.gid2cell(%d): %s'%(gid,config.pc.gid2cell(gid)))
+            if config.verbose:
+                print('Created cell %d on host %d out of %d'%(gid, config.idhost, config.nhost) )
+                print('config.pc.gid2cell(%d): %s'%(gid,config.pc.gid2cell(gid)))
             
     def connectCells(self):
         """Connect cells. Note that a "radius of 8" (as specified in Krishnan 2016) implies
@@ -443,9 +444,10 @@ class Net:
         h.define_shape() #call this again, so that all the other sections attached to each soma will move with it
         
         #print out locations of each section
-        for sec in h.allsec():
-            print("section=",sec.name()) #or use print h.secname()
-            for i in range(int(h.n3d())): print(i, h.x3d(i), h.y3d(i), h.z3d(i), h.diam3d(i))
+        if config.verbose:
+            for sec in h.allsec():
+                print("section=",sec.name()) #or use print h.secname()
+                for i in range(int(h.n3d())): print(i, h.x3d(i), h.y3d(i), h.z3d(i), h.diam3d(i))
             
         #call grindaway() in order to calculate centers of all segements, and--most importantly--copy these values to the xtra mechanism of each cell, so they can be used to calculate the LFP
         h.load_file('interpxyz.hoc') #from Ted's extracellular_stim_and_rec code; see https://www.neuron.yale.edu/phpBB/viewtopic.php?f=8&t=3649
@@ -477,38 +479,23 @@ class Net:
             h.pt3dchange(i,(a-xs[0])+newx,(b-ys[0])+newy,(c-zs[0])+newz,d,sec=cell.soma ) # part in parentheses gives location of non-zeroth coordinates relative to zeroth coordinate
             i+=1
     
-    def gatherSpikes(self):
-        """Gather spikes from all nodes/hosts"""
-        if config.idhost==0: print('Gathering spikes ...')
-        
-        data = [None]*config.nhost
-        data[0] = {'tVec': self.tVec, 'idVec': self.idVec}
-        config.pc.barrier()
-        gather=config.pc.py_alltoall(data)
-        config.pc.barrier()
-        self.tVecAll = [] 
-        self.idVecAll = [] 
+    def gatherChunk(self, v_part=None, lfp_part=None):
+        """Gather this chunk's spikes and, when the LFP is recorded, each host's
+        partial sums of cortical voltage and LFP onto host 0 in one collective.
+        Host 0 concatenates spikes and adds the partial sums in host order,
+        starting from zero, exactly as the separate spike and LFP gathers did."""
+        if config.verbose and config.idhost==0: print('Gathering spikes and LFP waveforms ...')
+        payload = (self.tVec.as_numpy().copy(), self.idVec.as_numpy().copy(), v_part, lfp_part)
+        gather = config.pc.py_gather(payload, 0) # list ordered by host id on host 0, None elsewhere
         if config.idhost==0:
-            for d in gather:
-                self.tVecAll.extend(list(d['tVec']))
-                self.idVecAll.extend(list(d['idVec']))
-                
-    def gatherLFP(self):
-        '''Gather LFP waveforms from all nodes/hosts'''
-        if config.idhost==0: print('Gathering LFP waveforms ...')
-        data = [None]*config.nhost #EACH NODE has this list, the i^th element of which will be sent to node i
-        data[0] = {'lfp': config.lfp_rec, 'v_rec': config.v_rec} #by making only the zeroth element something other than 'None,' this means each node will be sending data only to node 0
-        config.pc.barrier()
-        gather=config.pc.py_alltoall(data) #according to Lytton et. al. 2016, 'gather' is a list
-        config.pc.barrier() 
-        if config.idhost==0:
-            print(len(gather[0]['v_rec']))
-            print(len(gather[0]['lfp']))
-            self.v_sum=np.zeros(len(gather[0]['v_rec'])) #start sum at zeros, and make np array same length as v_rec lists
-            self.lfp_sum=np.zeros(len(gather[0]['lfp'])) #start sum at zeros, and make np array same length as lfp_rec lists
-            for d in gather:
-                self.v_sum += d['v_rec'] #compute summed cortical voltage, summed over contributions from nodes on all hosts
-                self.lfp_sum += d['lfp'] #compute cortical LFP, summed over contributions from nodes on all hosts
+            self.tVecAll = np.concatenate([d[0] for d in gather])
+            self.idVecAll = np.concatenate([d[1] for d in gather])
+            if v_part is not None:
+                self.v_sum = np.zeros(len(gather[0][2])) #start sum at zeros, and make np array same length as the per-host sums
+                self.lfp_sum = np.zeros(len(gather[0][3]))
+                for d in gather:
+                    self.v_sum += d[2] #compute summed cortical voltage, summed over contributions from nodes on all hosts
+                    self.lfp_sum += d[3] #compute cortical LFP, summed over contributions from nodes on all hosts
                 
     def plotRaster(self):
 
